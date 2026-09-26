@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <link rel="icon" href="favicon.ico" type="image/x-icon" />
     <title>Змея и Дом: Гравитационный Компас (Survival v3)</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+
+    <!-- ============================================ -->
+    <!-- ЛОКАЛЬНЫЙ THREE.JS (0.128.0) — работает офлайн -->
+    <!-- Файл three.min.js лежит рядом с index.html    -->
+    <!-- ============================================ -->
+    <script src="three.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
@@ -693,6 +699,20 @@
 </div>
 
 <script>
+// ==================== ПРОВЕРКА THREE.JS ====================
+if (typeof THREE === 'undefined') {
+    console.error('❌ THREE.js не загрузился! Проверь файл three.min.js рядом с index.html');
+    document.body.insertAdjacentHTML('afterbegin', `
+        <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:#1a0000;color:#ff8888;padding:40px;font-family:monospace;z-index:99999;overflow:auto;">
+            <h1>❌ Ошибка загрузки Three.js</h1>
+            <p>Файл <code>three.min.js</code> не найден рядом с <code>index.html</code>.</p>
+            <p>Скачай его: <a href="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.128.0/three.min.js" style="color:#00ffff;">three.min.js v0.128.0</a></p>
+            <p>И положи в корень проекта рядом с HTML.</p>
+        </div>
+    `);
+    throw new Error('THREE.js not loaded');
+}
+
 // ==================== ORBIT CONTROLS ====================
 THREE.OrbitControls = function(object, domElement) {
     this.object = object;
@@ -837,6 +857,7 @@ THREE.OrbitControls = function(object, domElement) {
     domElement.addEventListener('touchmove', onTouchMove, { passive: false });
 };
 
+console.log('✅ Three.js загружен локально, версия:', THREE.REVISION);
 console.log('Скрипт игры "Змея и Дом: Гравитационный Компас (Survival v3)" загружается...');
 
 // ==================== LEADERBOARD ====================
@@ -848,23 +869,18 @@ let currentLang = 'ru';
 
 const translations = {
     ru: {
-        title1: "Змея",
-        title2: "И",
-        title3: "Компас",
+        title1: "Змея", title2: "И", title3: "Компас",
         startBtn: "▶ НА ВЫЖИВАНИЕ!",
         supportTitle: "🤝 ПОДДЕРЖАТЬ ПРОЕКТ 💙",
         supportText1: "Приложение бесплатное.",
         supportText2: "Перевод:",
-        copyBtn: "📋 Копировать",
-        copiedBtn: "✅ Скопировано!",
+        copyBtn: "📋 Копировать", copiedBtn: "✅ Скопировано!",
         thanks: "❤️ Спасибо!",
         catalog: "👉 Каталог Anti-AI Shield",
-        playAgain: "🔄 Играть снова",
-        playAgain2: "🔄 Ещё раз",
+        playAgain: "🔄 Играть снова", playAgain2: "🔄 Ещё раз",
         menu: "🏠 В меню",
         goToLeaderboard: "🏆 Отправить на Доску почёта →",
-        gravLabel: "⬇ Гравитация:",
-        hpLabel: "❤️ Целостность:",
+        gravLabel: "⬇ Гравитация:", hpLabel: "❤️ Целостность:",
         resultWinLabel: "🎉 3 МИНУТЫ ПРОШЛИ!",
         resultTangleLabel: "❌ ЗАПУТАЛАСЬ!",
         resultTimeLabel: "⏱ Время вышло!",
@@ -893,23 +909,18 @@ const translations = {
         ttsStart: "Режим Выживания включен! Продержитесь 3 минуты. Двигайтесь, меняйте гравитацию, избегайте лавы и охотников."
     },
     en: {
-        title1: "Snake",
-        title2: "And",
-        title3: "Compass",
+        title1: "Snake", title2: "And", title3: "Compass",
         startBtn: "▶ SURVIVAL MODE!",
         supportTitle: "🤝 SUPPORT THE PROJECT 💙",
         supportText1: "The app is free.",
         supportText2: "Transfer:",
-        copyBtn: "📋 Copy",
-        copiedBtn: "✅ Copied!",
+        copyBtn: "📋 Copy", copiedBtn: "✅ Copied!",
         thanks: "❤️ Thank you!",
         catalog: "👉 Anti-AI Shield Catalog",
-        playAgain: "🔄 Play Again",
-        playAgain2: "🔄 Again",
+        playAgain: "🔄 Play Again", playAgain2: "🔄 Again",
         menu: "🏠 Menu",
         goToLeaderboard: "🏆 To Hall of Fame →",
-        gravLabel: "⬇ Gravity:",
-        hpLabel: "❤️ Integrity:",
+        gravLabel: "⬇ Gravity:", hpLabel: "❤️ Integrity:",
         resultWinLabel: "🎉 3 MINUTES SURVIVED!",
         resultTangleLabel: "❌ TANGLED!",
         resultTimeLabel: "⏱ Time's Up!",
@@ -947,7 +958,6 @@ window.toggleLanguage = function() {
 
 function updateLanguage() {
     const t = translations[currentLang];
-
     document.getElementById('txt-title1').textContent = t.title1;
     document.getElementById('txt-title2').textContent = t.title2;
     document.getElementById('txt-title3').textContent = t.title3;
@@ -963,7 +973,6 @@ function updateLanguage() {
     document.getElementById('txt-menu').textContent = t.menu;
     document.getElementById('txt-menu2').textContent = t.menu;
     document.getElementById('txt-goToBoard').textContent = t.goToLeaderboard;
-
     const gl = document.getElementById('grav-label');
     const hl = document.getElementById('hp-label');
     if (gl) gl.textContent = t.gravLabel;
@@ -1087,24 +1096,19 @@ let health = 100;
 let gameStartTime = 0;
 let difficultyLevel = 0;
 
-// ==== v3: СТАМИНА (античит бездействия) ====
 let stamina = 100;
-const STAMINA_DRAIN_RATE = 25;              // Потеря в секунду при простое
-const STAMINA_REGEN_RATE = 18;              // Восстановление в секунду при движении
-
-// Оконный контроль реальной активности (закрывает дырку с «дрожанием на месте»)
-const ACTIVITY_WINDOW = 4;                  // Окно проверки, сек
-const MIN_AVG_SPEED = 0.6;                  // Минимум единиц/сек для «движения»
+const STAMINA_DRAIN_RATE = 25;
+const STAMINA_REGEN_RATE = 18;
+const ACTIVITY_WINDOW = 4;
+const MIN_AVG_SPEED = 0.6;
 let activityDistanceBuffer = 0;
 let activityTimer = 0;
 
-// ==== v3: СУЖАЮЩАЯСЯ АРЕНА ====
 let arenaRadius = 12;
 const ARENA_MIN = 3.5;
 const ARENA_SHRINK_RATE = 0.08;
-const ARENA_DAMAGE_RATE = 12;               // HP/сек за ареной
+const ARENA_DAMAGE_RATE = 12;
 
-// ==== v3: ОХОТНИКИ ====
 let lastHunterSpawn = 0;
 const HUNTER_SPAWN_INTERVAL = 12;
 const MAX_HUNTERS = 5;
@@ -1114,7 +1118,6 @@ const HUNTER_DAMAGE = 30;
 const HUNTER_LIFETIME_MS = 15000;
 const hunters = [];
 
-// ==== v3: ФОРС-СМЕНА ГРАВИТАЦИИ ====
 let lastForcedGravChange = 0;
 let nextForcedGravChange = 15;
 
@@ -1122,7 +1125,6 @@ const ROOM_HALF = 12;
 const WALL_H = 10.0;
 const WALL_T = 0.45;
 
-// ==== ГРАВИТАЦИЯ ====
 let gravityDir = 0;
 const GRAV_DIRS_RU = ["НИЗ", "НАПРАВО", "ВЕРХ", "НАЛЕВО"];
 const GRAV_DIRS_EN = ["DOWN", "RIGHT", "UP", "LEFT"];
@@ -1292,7 +1294,6 @@ let fallVelocity = 0;
 const houseGroup = new THREE.Group();
 scene.add(houseGroup);
 
-// ==== УРОВЕНЬ ====
 const wallMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9, metalness: 0.05 });
 function addWall(w, h, d, x, y, z, color) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), color ? new THREE.MeshStandardMaterial({ color: color, roughness: 0.9, metalness: 0.05 }) : wallMat);
@@ -1309,7 +1310,6 @@ addWall(WALL_T, WALL_H, ROOM_HALF * 2,  ROOM_HALF + WALL_T / 2, innerY, 0);
 
 const CEIL_Y = -1.6 + WALL_H;
 
-// ==== ПЛАТФОРМЫ ====
 const platforms = [];
 function createPlatform(x, y, z, w, h, d, color) {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),
@@ -1326,7 +1326,6 @@ function createPlatform(x, y, z, w, h, d, color) {
 
 createPlatform(10, -1.4, 10, 6, 0.4, 6, 0x44aaff);
 
-// ==== ЛАВА-ЯМЫ ====
 const lavaPools = [];
 function createLavaPool(x, z, r) {
     const lava = new THREE.Mesh(
@@ -1342,7 +1341,6 @@ createLavaPool(-10, -10, 2.5);
 createLavaPool(10, -10, 2.0);
 createLavaPool(-10, 10, 2.0);
 
-// ==== СУЖАЮЩАЯСЯ АРЕНА (визуальное кольцо) ====
 const safeZoneRing = new THREE.Mesh(
     new THREE.RingGeometry(0.97, 1.0, 96),
     new THREE.MeshBasicMaterial({
@@ -1362,11 +1360,9 @@ const safeZoneGlow = new THREE.PointLight(0x00ffff, 0.8, 30);
 safeZoneGlow.position.set(0, 2, 0);
 scene.add(safeZoneGlow);
 
-// ==== ОХОТНИКИ ====
 function spawnHunter() {
     if (hunters.length >= MAX_HUNTERS) return;
 
-    // Спавн на краю арены (не за её пределами)
     const spawnRadius = Math.min(HUNTER_SPAWN_DIST, arenaRadius - 0.5);
     const angle = Math.random() * Math.PI * 2;
     const hx = headPos.x + Math.cos(angle) * spawnRadius;
@@ -1494,7 +1490,6 @@ function findGroundHeight(pos, gVec) {
 function spawnChaos() {
     difficultyLevel++;
 
-    // Спавн лавы — только внутри арены
     for (let attempt = 0; attempt < 5; attempt++) {
         const lx = (Math.random() - 0.5) * 2 * (arenaRadius - 2);
         const lz = (Math.random() - 0.5) * 2 * (arenaRadius - 2);
@@ -1505,7 +1500,6 @@ function spawnChaos() {
         }
     }
 
-    // Спавн платформы — внутри арены
     const px = (Math.random() - 0.5) * 2 * (arenaRadius - 2);
     const pz = (Math.random() - 0.5) * 2 * (arenaRadius - 2);
     const py = -1 + Math.random() * 4;
@@ -1529,20 +1523,16 @@ function updateHud() {
     if (stamBarEl) stamBarEl.style.width = Math.max(0, stamina) + '%';
 }
 
-// ==== v3: Единая функция смены гравитации + сброс камеры ====
 function switchGravity(change) {
     gravityDir = (gravityDir + change + 4) % 4;
     playGravSwitchSound();
     updateHud();
     fallVelocity = 0;
 
-    // Сброс полярных ограничений камеры под новую ось
-    if (gravityDir === 2) { // UP
-        // Даём камере встать снизу
+    if (gravityDir === 2) {
         controls.maxPolarAngle = Math.PI * 0.98;
         controls.minPolarAngle = -Math.PI / 4;
     } else {
-        // Обычные ограничения для DOWN/LEFT/RIGHT
         controls.maxPolarAngle = Math.PI / 2.05;
         controls.minPolarAngle = 0.1;
     }
@@ -1551,16 +1541,8 @@ function switchGravity(change) {
 document.addEventListener('keydown', (e) => {
     if (!isGameActive || gameOver) return;
 
-    if (e.code === 'ArrowUp') {
-        e.preventDefault();
-        switchGravity(1);
-        return;
-    }
-    if (e.code === 'ArrowDown') {
-        e.preventDefault();
-        switchGravity(-1);
-        return;
-    }
+    if (e.code === 'ArrowUp') { e.preventDefault(); switchGravity(1); return; }
+    if (e.code === 'ArrowDown') { e.preventDefault(); switchGravity(-1); return; }
     if (e.repeat) return;
 
     let newAngle = null;
@@ -1611,20 +1593,14 @@ function updateTimerDisplay() {
 
 function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
-
     gameTimeLeft = MAX_TIME;
     updateTimerDisplay();
 
     timerInterval = setInterval(() => {
         if (!isGameActive || gameOver) return;
-
         gameTimeLeft--;
         updateTimerDisplay();
-
-        if (gameTimeLeft % 20 === 0 && gameTimeLeft > 0) {
-            spawnChaos();
-        }
-
+        if (gameTimeLeft % 20 === 0 && gameTimeLeft > 0) spawnChaos();
         if (gameTimeLeft <= 0) {
             clearInterval(timerInterval);
             timerInterval = null;
@@ -1656,7 +1632,6 @@ function animate(time) {
     const prevHeadY = headPos.y;
     const prevHeadZ = headPos.z;
 
-    // 1. Steering
     let angleDiff = targetAngle - dirAngle;
     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
@@ -1667,7 +1642,6 @@ function animate(time) {
     moveDir.x = Math.cos(dirAngle);
     moveDir.z = Math.sin(dirAngle);
 
-    // 2. Horizontal Movement
     let currentSpeed = BASE_SPEED * speedMult;
     if (stunTime > 0) { stunTime -= delta; currentSpeed = 0; }
 
@@ -1681,7 +1655,6 @@ function animate(time) {
     headPos.x = newX;
     headPos.z = newZ;
 
-    // 3. Vertical Movement (гравитация)
     if (gVec.y !== 0) {
         fallVelocity += GRAVITY_FORCE * delta * gVec.y;
         headPos.y += fallVelocity * delta;
@@ -1690,7 +1663,6 @@ function animate(time) {
         headPos.x += fallVelocity * delta;
     }
 
-    // 4. Collision
     let landed = false;
     let impactSpeed = 0;
 
@@ -1720,22 +1692,16 @@ function animate(time) {
         }
     }
 
-    // 5. Fall Damage
     if (landed && impactSpeed > SAFE_FALL_SPEED) {
         const damage = (impactSpeed - SAFE_FALL_SPEED) * HP_LOSS_FACTOR;
         health -= damage;
         playImpactSound(impactSpeed);
         activeSegments = Math.max(6, activeSegments - 2);
         stunTime = 0.3;
-
-        if (health <= 0) {
-            finishGame('fall');
-            return;
-        }
+        if (health <= 0) { finishGame('fall'); return; }
         updateHud();
     }
 
-    // 6. Lava Check
     if (checkLavaCollision(headPos)) {
         playLavaSound();
         speakText('ttsLava');
@@ -1743,7 +1709,6 @@ function animate(time) {
         return;
     }
 
-    // 7. Self Collision
     if (checkSelfCollision(headPos)) {
         playTangleSound();
         speakText('ttsTangle');
@@ -1751,9 +1716,6 @@ function animate(time) {
         return;
     }
 
-    // ==================== v3: АНТИЧИТ + АРЕНА + ОХОТНИКИ ====================
-
-    // A. Стамина через оконную проверку средней скорости
     const movedDist = Math.sqrt(
         (headPos.x - prevHeadX) ** 2 +
         (headPos.y - prevHeadY) ** 2 +
@@ -1765,18 +1727,13 @@ function animate(time) {
 
     if (activityTimer >= ACTIVITY_WINDOW) {
         const avgSpeed = activityDistanceBuffer / ACTIVITY_WINDOW;
-
         if (avgSpeed >= MIN_AVG_SPEED) {
-            // Игрок реально двигался — восстановление
             stamina = Math.min(100, stamina + STAMINA_REGEN_RATE * ACTIVITY_WINDOW);
         } else {
-            // Игрок фактически стоял — жёсткий штраф
             stamina -= STAMINA_DRAIN_RATE * ACTIVITY_WINDOW;
         }
-
         activityDistanceBuffer = 0;
         activityTimer = 0;
-
         if (stamina <= 0) {
             speakText('ttsIdle');
             finishGame('idle');
@@ -1784,12 +1741,9 @@ function animate(time) {
         }
     }
 
-    // B. Сужающаяся арена — урон только когда прижим не по гравитации
     if (arenaRadius > ARENA_MIN) {
         arenaRadius = Math.max(ARENA_MIN, arenaRadius - ARENA_SHRINK_RATE * delta);
-
         safeZoneRing.scale.set(arenaRadius, arenaRadius, 1);
-
         const shrinkT = (ROOM_HALF - arenaRadius) / (ROOM_HALF - ARENA_MIN);
         safeZoneRing.material.opacity = 0.4 + shrinkT * 0.5;
         if (shrinkT > 0.8) safeZoneRing.material.color.setHex(0xff2200);
@@ -1797,14 +1751,12 @@ function animate(time) {
 
         const distFromCenter = Math.max(Math.abs(headPos.x), Math.abs(headPos.z));
         if (distFromCenter > arenaRadius) {
-            // НЕ штрафуем, если игрока прижимает гравитацией к краю
             const gPushX = gVec.x;
             const gPushY = gVec.y;
             const isPressedByGravity =
                 (gPushX > 0 && headPos.x > 0) ||
                 (gPushX < 0 && headPos.x < 0) ||
-                (gPushY < 0 && headPos.y < -1.6); // прижат ко дну
-
+                (gPushY < 0 && headPos.y < -1.6);
             if (!isPressedByGravity) {
                 health -= ARENA_DAMAGE_RATE * delta;
                 if (health <= 0) {
@@ -1817,7 +1769,6 @@ function animate(time) {
         }
     }
 
-    // C. Охотники
     if (elapsed - lastHunterSpawn >= HUNTER_SPAWN_INTERVAL && gameTimeLeft > 10) {
         spawnHunter();
         lastHunterSpawn = elapsed;
@@ -1825,20 +1776,15 @@ function animate(time) {
 
     for (let i = hunters.length - 1; i >= 0; i--) {
         const h = hunters[i];
-
-        // Удаляем старых охотников
         if (performance.now() - h.spawnTime > HUNTER_LIFETIME_MS) {
             scene.remove(h.mesh);
             hunters.splice(i, 1);
             continue;
         }
-
         _hunterDir.subVectors(headPos, h.mesh.position);
         const dist = _hunterDir.length();
         if (dist > 0.1) _hunterDir.normalize();
-
         h.mesh.position.addScaledVector(_hunterDir, h.speed * delta);
-
         h.core.rotation.x += delta * 3;
         h.core.rotation.y += delta * 2;
         h.shell.rotation.x -= delta * 1.5;
@@ -1849,10 +1795,8 @@ function animate(time) {
             health -= HUNTER_DAMAGE;
             activeSegments = Math.max(6, activeSegments - 3);
             stunTime = 0.4;
-
             scene.remove(h.mesh);
             hunters.splice(i, 1);
-
             if (health <= 0) {
                 speakText('ttsHunter');
                 finishGame('hunter');
@@ -1862,23 +1806,17 @@ function animate(time) {
         }
     }
 
-    // D. Форс-смена гравитации
     if (elapsed - lastForcedGravChange >= nextForcedGravChange && gameTimeLeft > 20) {
         lastForcedGravChange = elapsed;
         nextForcedGravChange = Math.max(8, 15 - difficultyLevel * 0.5);
-
         const randomChange = Math.random() > 0.5 ? 1 : -1;
         switchGravity(randomChange);
         speakRaw(currentLang === 'ru' ? "Гравитация нестабильна!" : "Gravity unstable!");
     }
 
-    // ==================== КОНЕЦ v3 МЕХАНИК ====================
-
-    // 8. Score
     const timeSurvived = MAX_TIME - gameTimeLeft;
     progressPercent = timeSurvived;
 
-    // 9. Path History & Rendering
     segmentPositions[0].x = headPos.x - moveDir.x * BACK_OFFSET;
     segmentPositions[0].z = headPos.z - moveDir.z * BACK_OFFSET;
     segmentPositions[0].y = headPos.y;
@@ -1950,7 +1888,6 @@ function animate(time) {
     tongueGroup.position.z = 1.08 + tongueOut * 0.45;
     tongueGroup.visible = tongueOut > 0.1;
 
-    // Camera
     let camOffset;
     if (gravityDir === 1) camOffset = CAM_OFFSET_RIGHT;
     else if (gravityDir === 3) camOffset = CAM_OFFSET_LEFT;
@@ -1982,7 +1919,6 @@ window.finishGame = function(reason) {
     if (gameOver) return;
     gameOver = true; isGameActive = false;
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-
     clearHunters();
 
     const label = document.getElementById('result-label');
@@ -2124,7 +2060,7 @@ updateLanguage();
 document.getElementById('txt-startBtn').addEventListener('click', startGame);
 
 animate(0);
-console.log('✅ Игра "Змея и Дом: Гравитационный Компас (Survival v3)" запущена! Все механики v2 + фиксы.');
+console.log('✅ Игра "Змея и Дом: Гравитационный Компас (Survival v3)" запущена! Three.js версия:', THREE.REVISION);
 </script>
 </body>
 </html>
