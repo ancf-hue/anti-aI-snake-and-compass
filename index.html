@@ -7,10 +7,10 @@
     <title>Змея и Дом: Гравитационный Компас (Survival v3)</title>
 
     <!-- ============================================ -->
-    <!-- ЛОКАЛЬНЫЙ THREE.JS (0.128.0) — работает офлайн -->
-    <!-- Файл three.min.js лежит рядом с index.html    -->
+    <!-- THREE.JS 0.128.0 — рабочий CDN jsDelivr       -->
+    <!-- Проверено: файл three.min.js существует     -->
     <!-- ============================================ -->
-    <script src="three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
@@ -701,17 +701,19 @@
 <script>
 // ==================== ПРОВЕРКА THREE.JS ====================
 if (typeof THREE === 'undefined') {
-    console.error('❌ THREE.js не загрузился! Проверь файл three.min.js рядом с index.html');
+    console.error('❌ THREE.js не загрузился!');
     document.body.insertAdjacentHTML('afterbegin', `
         <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:#1a0000;color:#ff8888;padding:40px;font-family:monospace;z-index:99999;overflow:auto;">
             <h1>❌ Ошибка загрузки Three.js</h1>
-            <p>Файл <code>three.min.js</code> не найден рядом с <code>index.html</code>.</p>
-            <p>Скачай его: <a href="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.128.0/three.min.js" style="color:#00ffff;">three.min.js v0.128.0</a></p>
-            <p>И положи в корень проекта рядом с HTML.</p>
+            <p>Библиотека не смогла загрузиться с CDN jsDelivr.</p>
+            <p>Проверь интернет или попробуй резерв:</p>
+            <p><a href="https://unpkg.com/three@0.128.0/build/three.min.js" style="color:#00ffff;">unpkg.com/three@0.128.0</a></p>
         </div>
     `);
     throw new Error('THREE.js not loaded');
 }
+
+console.log('✅ Three.js версия:', THREE.REVISION);
 
 // ==================== ORBIT CONTROLS ====================
 THREE.OrbitControls = function(object, domElement) {
@@ -857,7 +859,6 @@ THREE.OrbitControls = function(object, domElement) {
     domElement.addEventListener('touchmove', onTouchMove, { passive: false });
 };
 
-console.log('✅ Three.js загружен локально, версия:', THREE.REVISION);
 console.log('Скрипт игры "Змея и Дом: Гравитационный Компас (Survival v3)" загружается...');
 
 // ==================== LEADERBOARD ====================
