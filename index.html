@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <title>Змея и Дом: Гравитационный Компас (Survival v3)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #050510;
+            font-family: 'Inter', sans-serif;
+            color: #fff;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        canvas {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            pointer-events: auto !important;
+        }
+
+        canvas.game-active { display: block !important; }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s, transform 0.5s;
+            transform: scale(0.95);
+            z-index: 10;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(5, 5, 16, 0.95);
+        }
+
+        .page.active {
+            opacity: 1;
+            pointer-events: all;
+            transform: scale(1);
+            z-index: 200;
+        }
+
+        #page-game {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            pointer-events: none;
+            justify-content: flex-start;
+            z-index: 50;
+        }
+
+        #page-game .hud-panel,
+        #page-game button,
+        #page-game a,
+        #page-game #touch-controls > div {
+            pointer-events: auto;
+        }
+
+        #page-description {
+            background: url('foto.webp') no-repeat center center;
+            background-size: cover;
+            position: relative;
+            background-color: #0a0f1a;
+        }
+
+        #page-description h1,
+        #page-description .subtitle,
+        #page-description .glass-btn-3d,
+        #page-description .support-block {
+            text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7);
+        }
+
+        .lang-btn-3d {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 800;
+            color: #e0f0ff;
+            background: rgba(30, 100, 255, 0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(100, 150, 255, 0.4);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 8px 32px rgba(30, 100, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 40px rgba(30, 100, 255, 0.15);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            z-index: 200;
+            animation: glassPulseBlue 3s ease-in-out infinite;
+        }
+
+        @keyframes glassPulseBlue {
+            0%, 100% {
+                box-shadow: 0 8px 32px rgba(100, 150, 255, 0.2), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 40px rgba(100,150,255,0.15);
+                border-color: rgba(100,150,255,0.4);
+            }
+            50% {
+                box-shadow: 0 8px 48px rgba(100, 150, 255, 0.4), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 70px rgba(100,150,255,0.3);
+                border-color: rgba(150,200,255,0.7);
+            }
+        }
+
+        .lang-btn-3d:hover {
+            transform: translateY(-3px) scale(1.05);
+            border-color: rgba(100, 180, 255, 0.9);
+            color: #ffffff;
+            text-shadow: 0 0 12px rgba(100, 180, 255, 0.9);
+            box-shadow: 0 12px 40px rgba(30, 100, 255, 0.5), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 60px rgba(30, 100, 255, 0.4);
+            animation: none;
+        }
+
+        .lang-btn-3d:active { transform: translateY(1px) scale(0.97); }
+
+        .glass-btn-3d {
+            position: relative;
+            padding: 18px 48px;
+            font-size: 18px;
+            font-weight: 800;
+            color: #e0ffe0;
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(76,255,128,0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25,0.8,0.25,1);
+            box-shadow: 0 8px 32px rgba(76,255,128,0.15), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.2), 0 0 40px rgba(76,255,128,0.1);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            overflow: hidden;
+            margin: 12px;
+            z-index: 1;
+            animation: glassPulse 3s ease-in-out infinite;
+            touch-action: none;
+        }
+
+        .glass-btn-3d::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 60%);
+            pointer-events: none;
+            mix-blend-mode: overlay;
+            animation: shineMove 6s linear infinite;
+        }
+
+        .glass-btn-3d::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.15), transparent);
+            border-radius: 20px 20px 0 0;
+            pointer-events: none;
+        }
+
+        @keyframes shineMove {
+            0% { transform: translate(-20%,-20%) rotate(0deg); }
+            100% { transform: translate(20%,20%) rotate(10deg); }
+        }
+
+        @keyframes glassPulse {
+            0%,100% {
+                box-shadow: 0 8px 32px rgba(76,255,128,0.15), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 40px rgba(76,255,128,0.1);
+                border-color: rgba(76,255,128,0.3);
+            }
+            50% {
+                box-shadow: 0 8px 48px rgba(76,255,128,0.35), inset 0 1px 0 rgba(255,255,255,0.5), 0 0 70px rgba(76,255,128,0.25);
+                border-color: rgba(136,255,170,0.6);
+            }
+        }
+
+        .glass-btn-3d:hover {
+            transform: translateY(-4px) scale(1.03);
+            border-color: rgba(76,255,128,0.8);
+            color: #fff;
+            text-shadow: 0 0 12px rgba(76,255,128,0.9);
+            box-shadow: 0 12px 40px rgba(76,255,128,0.4), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 80px rgba(76,255,128,0.3);
+            animation: none;
+        }
+
+        .glass-btn-3d:active {
+            transform: translateY(1px) scale(0.97);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .glass-btn-3d.secondary {
+            color: #aaccff;
+            border-color: rgba(100,150,255,0.3);
+            animation: glassPulseBlue 3s ease-in-out infinite;
+        }
+
+        .glass-btn-3d.secondary:hover {
+            border-color: rgba(100,150,255,0.8);
+            text-shadow: 0 0 12px rgba(100,150,255,0.9);
+            box-shadow: 0 12px 40px rgba(100,150,255,0.4), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 80px rgba(100,150,255,0.3);
+            animation: none;
+        }
+
+        .glass-btn-3d.primary-submit {
+            color: #ffffff;
+            background: linear-gradient(135deg, rgba(0, 200, 255, 0.3), rgba(0, 100, 200, 0.2));
+            border-color: rgba(0, 255, 255, 0.9);
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+            box-shadow: 0 0 35px rgba(0, 255, 255, 0.6), 0 0 60px rgba(0, 200, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+            animation: cyanPulse 2s ease-in-out infinite;
+            padding: 16px 40px;
+            font-size: 17px;
+        }
+
+        @keyframes cyanPulse {
+            0%, 100% {
+                box-shadow: 0 0 35px rgba(0, 255, 255, 0.6), 0 0 60px rgba(0, 200, 255, 0.3), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 0 rgba(0,0,0,0.2);
+            }
+            50% {
+                box-shadow: 0 0 50px rgba(50, 255, 255, 0.9), 0 0 90px rgba(0, 220, 255, 0.5), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -2px 0 rgba(0,0,0,0.2);
+            }
+        }
+
+        .glass-btn-3d.primary-submit:hover {
+            border-color: rgba(150, 255, 255, 1);
+            color: #ffffff;
+            animation: none;
+            box-shadow: 0 0 60px rgba(50, 255, 255, 1), 0 0 100px rgba(0, 220, 255, 0.7);
+        }
+
+        .touch-btn {
+            font-size: 28px !important;
+            padding: 12px 22px !important;
+            margin: 4px !important;
+            min-width: 60px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px !important;
+            box-shadow: 0 4px 20px rgba(76,255,128,0.2), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 30px rgba(76,255,128,0.08) !important;
+            animation: glassPulse 3s ease-in-out infinite !important;
+            touch-action: none !important;
+        }
+
+        .touch-btn:active {
+            transform: scale(0.92) !important;
+            box-shadow: 0 2px 8px rgba(76,255,128,0.4), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+        }
+
+        .title-main {
+            font-size: clamp(36px,8vw,64px);
+            font-weight: 800;
+            color: #FFD700;
+            -webkit-text-stroke: 2px #000;
+            text-shadow:
+                3px 3px 0px #000,
+                -1px -1px 0px #000,
+                1px -1px 0px #000,
+                -1px 1px 0px #000,
+                1px 1px 0px #000,
+                0px 0px 10px rgba(0,0,0,0.8);
+            margin-bottom: 16px;
+            text-align: center;
+            line-height: 1.1;
+            z-index: 1;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: clamp(16px,3vw,22px);
+            color: #ccffee;
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            padding: 0 20px;
+            z-index: 1;
+            position: relative;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .support-block {
+            width: 100%;
+            max-width: 95vw;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px;
+            padding: 10px 20px;
+            z-index: 1;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #ddbbbb;
+            text-align: center;
+            margin-top: 20px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .support-block .highlight { color: #00ffff; font-weight: 800; }
+        .support-block .phone { color: #fff; letter-spacing: 0.5px; font-weight: bold; }
+
+        .support-block .copy-btn {
+            background: rgba(0,255,255,0.15);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 4px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .support-block .copy-btn:hover {
+            background: rgba(0,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .support-block a {
+            color: #88ddff;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #game-logo {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 116px;
+            height: 116px;
+            border-radius: 24px;
+            z-index: 65;
+            pointer-events: none;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.6), 0 0 34px rgba(0,255,255,0.3);
+            border: 2px solid rgba(255,255,255,0.24);
+            background: rgba(10,8,16,0.35);
+            object-fit: contain;
+        }
+
+        #game-hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 50;
+            gap: 10px;
+        }
+
+        .hud-left {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: auto;
+            min-width: 140px;
+        }
+
+        .hud-panel {
+            background: rgba(20,15,15,0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 12px 20px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            pointer-events: auto;
+        }
+
+        .hud-timer {
+            font-size: 24px;
+            font-weight: 800;
+            color: #88ddff;
+            text-shadow: 0 0 10px rgba(136,221,255,0.4);
+            min-width: 92px;
+            text-align: center;
+            margin-left: auto;
+        }
+
+        .hud-timer.warning {
+            color: #ff8866;
+            text-shadow: 0 0 10px rgba(255,136,102,0.6);
+        }
+
+        .gravity-indicator {
+            font-size: 20px;
+            font-weight: 800;
+            text-align: center;
+            padding: 5px;
+            border-radius: 8px;
+            margin-top: 5px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        .hp-bar-container, .stamina-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 4px;
+            margin-top: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff8888);
+            transition: width 0.2s;
+        }
+
+        .stamina-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ffcc00, #ffee88);
+            transition: width 0.2s;
+        }
+
+        .result-label {
+            font-size: 20px;
+            color: #ddbbbb;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .result-score {
+            font-size: clamp(48px, 10vw, 80px);
+            font-weight: 800;
+            color: #ffdd88;
+            text-shadow: 0 0 30px rgba(255, 221, 136, 0.5);
+            margin: 20px 0;
+        }
+
+        .red-snake-reward {
+            font-size: clamp(60px, 12vw, 100px) !important;
+            filter: hue-rotate(320deg) saturate(4) brightness(1.2);
+            text-shadow: 0 0 40px rgba(255, 0, 0, 0.9), 0 0 80px rgba(255, 50, 50, 0.6);
+            animation: snakeGlow 2s ease-in-out infinite alternate;
+            margin: 10px 0;
+        }
+
+        @keyframes snakeGlow {
+            from {
+                text-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
+                transform: scale(1);
+            }
+            to {
+                text-shadow: 0 0 60px rgba(255, 50, 50, 1), 0 0 100px rgba(255, 0, 0, 0.4);
+                transform: scale(1.05);
+            }
+        }
+
+        .reward-text {
+            font-size: clamp(18px, 4vw, 26px);
+            color: #00ffff;
+            font-weight: 800;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .confetti {
+            position: fixed;
+            top: -10px;
+            z-index: 9999;
+            pointer-events: none;
+            border-radius: 2px;
+        }
+
+        #touch-controls {
+            position: absolute;
+            bottom: calc(90px + env(safe-area-inset-bottom));
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 12px;
+            z-index: 55;
+            pointer-events: none;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        #touch-controls > div {
+            pointer-events: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        @media (max-width: 700px) {
+            #game-logo {
+                top: 6px;
+                width: 84px;
+                height: 84px;
+                border-radius: 18px;
+            }
+
+            #game-hud {
+                top: 15px;
+                left: 10px;
+                right: 10px;
+                gap: 8px;
+            }
+
+            .hud-left {
+                gap: 6px;
+                min-width: 120px;
+            }
+
+            .hud-panel {
+                font-size: 12px;
+                padding: 7px 10px;
+                border-radius: 12px;
+            }
+
+            .hud-timer {
+                font-size: 15px;
+                min-width: 78px;
+                padding: 8px 12px;
+            }
+
+            .glass-btn-3d {
+                padding: 14px 32px;
+                font-size: 16px;
+            }
+
+            .lang-btn-3d {
+                top: 15px;
+                right: 15px;
+                padding: 10px 18px;
+                font-size: 14px;
+            }
+
+            .touch-btn {
+                font-size: 22px !important;
+                padding: 10px 16px !important;
+                min-width: 50px;
+                min-height: 50px;
+            }
+
+            #touch-controls {
+                bottom: calc(80px + env(safe-area-inset-bottom));
+                padding: 0 6px;
+                gap: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="page-description" class="page active">
+    <button class="lang-btn-3d" id="langToggleBtn" onclick="toggleLanguage()">RU / EN</button>
+
+    <img src="favicon.ico" alt="Логотип" onerror="this.style.display='none'" style="width:144px;height:144px;margin-bottom:16px;border-radius:24px;box-shadow:0 0 30px rgba(0,255,255,0.4);border:2px solid rgba(255,255,255,0.2);z-index:1;">
+
+    <h1 class="title-main" id="txt-title1">Змея</h1>
+    <h1 class="title-main" id="txt-title2" style="font-size:clamp(32px,7vw,56px);margin-top:-10px;">И</h1>
+    <h1 class="title-main" id="txt-title3" style="font-size:clamp(32px,7vw,56px);margin-top:-10px;">Компас</h1>
+
+    <div style="flex-grow:1;"></div>
+
+    <button class="glass-btn-3d" id="txt-startBtn" style="margin:0 auto 16px auto;z-index:1;">▶ НА ВЫЖИВАНИЕ!</button>
+
+    <div class="support-block">
+        <span class="highlight" id="txt-supportTitle">🤝 ПОДДЕРЖАТЬ ПРОЕКТ 💙</span>
+        <span id="txt-supportText1">Приложение бесплатное.</span>
+        <span id="txt-supportText2">Перевод: <strong class="phone">8-920-227-56-76</strong></span>
+        <button class="copy-btn" id="txt-copyBtn" onclick="copyPhone()">📋 Копировать</button>
+        <span id="txt-thanks">❤️ Спасибо!</span>
+        <a href="https://ancf-hue.github.io/" target="_blank" rel="noopener noreferrer" id="txt-catalog">👉 Каталог Anti-AI Shield</a>
+    </div>
+</div>
+
+<div id="page-game" class="page">
+    <img id="game-logo" src="favicon.ico" alt="Логотип" onerror="this.style.display='none'" />
+
+    <div id="game-hud">
+        <div class="hud-left">
+            <div class="hud-panel" id="hud-grav">
+                <span id="grav-label" style="color:#00ffff;">⬇ Гравитация:</span>
+                <div id="house-grav-dir" class="gravity-indicator">НИЗ</div>
+                <div style="font-size:12px; color:#aaa; margin-top:5px; text-align:center;">↑↓ — менять вектор</div>
+            </div>
+
+            <div class="hud-panel" id="hud-health">
+                <span id="hp-label" style="color:#ff5555;">❤️ Целостность:</span>
+                <span id="house-hp" style="font-weight:800;">100%</span>
+                <div class="hp-bar-container"><div class="hp-bar-fill" id="hp-bar"></div></div>
+            </div>
+
+            <div class="hud-panel" id="hud-stamina">
+                <span style="color:#ffcc00; font-size:13px;">⚡ Активность:</span>
+                <span id="house-stamina" style="font-weight:800; font-size:13px;">100%</span>
+                <div class="stamina-bar-container"><div class="stamina-bar-fill" id="stamina-bar"></div></div>
+            </div>
+        </div>
+
+        <div class="hud-panel hud-timer" id="timerDisplay">⏱ 3:00</div>
+    </div>
+
+    <div id="touch-controls">
+        <div>
+            <button class="touch-btn glass-btn-3d" data-action="left">◀</button>
+            <button class="touch-btn glass-btn-3d" data-action="right">▶</button>
+        </div>
+        <div>
+            <button class="touch-btn glass-btn-3d" data-action="gravUp">🔄 ГРАВ +</button>
+            <button class="touch-btn glass-btn-3d" data-action="gravDown">🔄 ГРАВ −</button>
+        </div>
+        <div>
+            <button class="touch-btn glass-btn-3d" data-action="forward">▲</button>
+            <button class="touch-btn glass-btn-3d" data-action="backward">▼</button>
+        </div>
+    </div>
+</div>
+
+<div id="page-result" class="page">
+    <div class="page-bg"></div>
+
+    <img src="favicon.ico" alt="Логотип" onerror="this.style.display='none'" style="width:128px;height:128px;margin-bottom:16px;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.2);">
+
+    <div class="result-label" id="result-label">⏱ Время вышло!</div>
+    <div class="result-score" id="result-emoji">🧭</div>
+
+    <div id="win-block" style="display:none; text-align:center; width:100%; max-width:500px;">
+        <div class="reward-text" id="reward-text">🎁 Награда: Красная змея!</div>
+        <p class="subtitle" id="result-text-win">Вы продержались 3 минуты! Хаос усмирен.</p>
+
+        <button class="glass-btn-3d primary-submit" id="txt-goToBoard" onclick="goToLeaderboard()">
+            🏆 Отправить на Доску почёта →
+        </button>
+
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:8px;">
+            <button class="glass-btn-3d secondary" id="txt-playAgain2" onclick="startGame()" style="padding:12px 24px; font-size:14px;">🔄 Ещё раз</button>
+            <button class="glass-btn-3d secondary" id="txt-menu2" onclick="showPage('page-description')" style="padding:12px 24px; font-size:14px;">🏠 В меню</button>
+        </div>
+    </div>
+
+    <div id="lose-block" style="display:none; text-align:center;">
+        <p class="subtitle" id="result-text-lose">Попробуйте ещё раз!</p>
+        <div style="display:flex; flex-wrap:wrap; justify-content:center; margin-top:20px;">
+            <button class="glass-btn-3d" id="txt-playAgain" onclick="startGame()">🔄 Играть снова</button>
+            <button class="glass-btn-3d secondary" id="txt-menu" onclick="showPage('page-description')">🏠 В меню</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== ORBIT CONTROLS ====================
+THREE.OrbitControls = function(object, domElement) {
+    this.object = object;
+    this.domElement = domElement;
+    this.enabled = true;
+    this.target = new THREE.Vector3();
+    this.minDistance = 0;
+    this.maxDistance = Infinity;
+    this.minPolarAngle = 0;
+    this.maxPolarAngle = Math.PI;
+    this.enableDamping = false;
+    this.dampingFactor = 0.05;
+    this.enableZoom = true;
+    this.enableRotate = true;
+    this.enablePan = false;
+    this.zoomSpeed = 1.0;
+    this.rotateSpeed = 1.0;
+
+    var scope = this;
+    var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1 };
+    var state = STATE.NONE;
+    var spherical = new THREE.Spherical();
+    var sphericalDelta = new THREE.Spherical();
+    var rotateStart = new THREE.Vector2();
+    var rotateEnd = new THREE.Vector2();
+    var rotateDelta = new THREE.Vector2();
+    var offset = new THREE.Vector3();
+    var quat = new THREE.Quaternion().setFromUnitVectors(object.up, new THREE.Vector3(0, 1, 0));
+    var quatInverse = quat.clone().invert();
+    var scale = 1;
+    var zoomStart = 0;
+
+    this.update = function() {
+        offset.copy(scope.object.position).sub(scope.target);
+        offset.applyQuaternion(quat);
+        spherical.setFromVector3(offset);
+
+        spherical.theta += sphericalDelta.theta;
+        spherical.phi += sphericalDelta.phi;
+        spherical.phi = Math.max(scope.minPolarAngle, Math.min(scope.maxPolarAngle, spherical.phi));
+        spherical.makeSafe();
+
+        spherical.radius *= scale;
+        spherical.radius = Math.max(scope.minDistance, Math.min(scope.maxDistance, spherical.radius));
+
+        offset.setFromSpherical(spherical);
+        offset.applyQuaternion(quatInverse);
+        scope.object.position.copy(scope.target).add(offset);
+        scope.object.lookAt(scope.target);
+
+        scale = 1;
+
+        if (scope.enableDamping) {
+            sphericalDelta.theta *= (1 - scope.dampingFactor);
+            sphericalDelta.phi *= (1 - scope.dampingFactor);
+        } else {
+            sphericalDelta.set(0, 0, 0);
+        }
+    };
+
+    function rotateLeft(angle) { sphericalDelta.theta -= angle; }
+    function rotateUp(angle) { sphericalDelta.phi -= angle; }
+
+    function onMouseDown(event) {
+        if (!scope.enabled || !scope.enableRotate) return;
+        event.preventDefault();
+        state = STATE.ROTATE;
+        rotateStart.set(event.clientX, event.clientY);
+        document.addEventListener('mousemove', onMouseMove, false);
+        document.addEventListener('mouseup', onMouseUp, false);
+    }
+
+    function onMouseMove(event) {
+        if (!scope.enabled || state !== STATE.ROTATE) return;
+        event.preventDefault();
+        rotateEnd.set(event.clientX, event.clientY);
+        rotateDelta.subVectors(rotateEnd, rotateStart);
+        rotateLeft(2 * Math.PI * rotateDelta.x / domElement.clientWidth * scope.rotateSpeed);
+        rotateUp(2 * Math.PI * rotateDelta.y / domElement.clientHeight * scope.rotateSpeed);
+        rotateStart.copy(rotateEnd);
+    }
+
+    function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove, false);
+        document.removeEventListener('mouseup', onMouseUp, false);
+        state = STATE.NONE;
+    }
+
+    function onMouseWheel(event) {
+        if (!scope.enabled || !scope.enableZoom) return;
+        event.preventDefault();
+        const factor = Math.pow(0.95, scope.zoomSpeed);
+        if (event.deltaY < 0) scale /= factor;
+        else scale *= factor;
+    }
+
+    function onTouchStart(event) {
+        if (!scope.enabled) return;
+        event.preventDefault();
+        if (event.touches.length === 1 && scope.enableRotate) {
+            state = STATE.ROTATE;
+            rotateStart.set(event.touches[0].pageX, event.touches[0].pageY);
+        } else if (event.touches.length === 2 && scope.enableZoom) {
+            state = STATE.ZOOM;
+            const dx = event.touches[0].pageX - event.touches[1].pageX;
+            const dy = event.touches[0].pageY - event.touches[1].pageY;
+            zoomStart = Math.sqrt(dx*dx + dy*dy);
+        }
+    }
+
+    function onTouchMove(event) {
+        if (!scope.enabled) return;
+        event.preventDefault();
+        if (event.touches.length === 1 && state === STATE.ROTATE) {
+            rotateEnd.set(event.touches[0].pageX, event.touches[0].pageY);
+            rotateDelta.subVectors(rotateEnd, rotateStart);
+            rotateLeft(2 * Math.PI * rotateDelta.x / domElement.clientWidth * scope.rotateSpeed);
+            rotateUp(2 * Math.PI * rotateDelta.y / domElement.clientHeight * scope.rotateSpeed);
+            rotateStart.copy(rotateEnd);
+        } else if (event.touches.length === 2 && state === STATE.ZOOM && scope.enableZoom) {
+            const dx = event.touches[0].pageX - event.touches[1].pageX;
+            const dy = event.touches[0].pageY - event.touches[1].pageY;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            if (zoomStart > 0) {
+                const factor = zoomStart / distance;
+                scale *= factor;
+                zoomStart = distance;
+            }
+        }
+    }
+
+    function onTouchEnd() {
+        state = STATE.NONE;
+        zoomStart = 0;
+    }
+
+    domElement.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
+    domElement.addEventListener('mousedown', onMouseDown, false);
+    domElement.addEventListener('wheel', onMouseWheel, { passive: false });
+    domElement.addEventListener('touchstart', onTouchStart, { passive: false });
+    domElement.addEventListener('touchend', onTouchEnd, false);
+    domElement.addEventListener('touchmove', onTouchMove, { passive: false });
+};
+
+console.log('Скрипт игры "Змея и Дом: Гравитационный Компас (Survival v3)" загружается...');
+
+// ==================== LEADERBOARD ====================
+const MAIN_LEADERBOARD_URL = "https://anti-ii-zmeya-vse-igry.vercel.app/";
+const GAME_NAME_FOR_BOARD = "🐍 - 🧭 Змея и Дом: Гравитационный Компас";
+const REWARD_SNAKES_ON_WIN = 1;
+
+let currentLang = 'ru';
+
+const translations = {
+    ru: {
+        title1: "Змея",
+        title2: "И",
+        title3: "Компас",
+        startBtn: "▶ НА ВЫЖИВАНИЕ!",
+        supportTitle: "🤝 ПОДДЕРЖАТЬ ПРОЕКТ 💙",
+        supportText1: "Приложение бесплатное.",
+        supportText2: "Перевод:",
+        copyBtn: "📋 Копировать",
+        copiedBtn: "✅ Скопировано!",
+        thanks: "❤️ Спасибо!",
+        catalog: "👉 Каталог Anti-AI Shield",
+        playAgain: "🔄 Играть снова",
+        playAgain2: "🔄 Ещё раз",
+        menu: "🏠 В меню",
+        goToLeaderboard: "🏆 Отправить на Доску почёта →",
+        gravLabel: "⬇ Гравитация:",
+        hpLabel: "❤️ Целостность:",
+        resultWinLabel: "🎉 3 МИНУТЫ ПРОШЛИ!",
+        resultTangleLabel: "❌ ЗАПУТАЛАСЬ!",
+        resultTimeLabel: "⏱ Время вышло!",
+        resultFallLabel: "💥 РАЗБИЛАСЬ!",
+        resultLavaLabel: "🔥 СГОРЕЛА В ЛАВЕ!",
+        resultIdleLabel: "😴 ЗМЕЯ ЗАСНУЛА!",
+        resultHunterLabel: "👾 ОХОТНИК ПОЙМАЛ!",
+        resultArenaLabel: "⛔ ВЫШЕЛ ЗА ПРЕДЕЛЫ АРЕНЫ!",
+        resultWinText: "Вы выжили в хаосе! Осталось здоровья: {hp}%.",
+        rewardText: "🎁 Награда: Красная змея!",
+        resultTangleText: "Змея запуталась! Выжил: {score} сек.",
+        resultTimeText: "Баг системы? Пройдено: {score} сек.",
+        resultFallText: "Падение было фатальным! Выжил: {score} сек.",
+        resultLavaText: "Лава поглотила вас! Выжил: {score} сек.",
+        resultIdleText: "Нельзя стоять на месте! Змея заснула на {score} сек.",
+        resultHunterText: "Охотник настиг вас! Выжил: {score} сек.",
+        resultArenaText: "Арена схлопнулась! Выжил: {score} сек.",
+        ttsTangle: "Ой! Змея запуталась!",
+        ttsWin: "Невероятно! Вы продержались 3 минуты! Награда: Красная змея!",
+        ttsTime: function() { return "Время вышло."; },
+        ttsFall: function() { return "Вы разбились при падении."; },
+        ttsLava: function() { return "Шипение! Вы сгорели в лаве."; },
+        ttsIdle: "Змея заснула! Нельзя бездействовать!",
+        ttsHunter: "Охотник вас поймал!",
+        ttsArena: "Вышли за пределы безопасной зоны!",
+        ttsStart: "Режим Выживания включен! Продержитесь 3 минуты. Двигайтесь, меняйте гравитацию, избегайте лавы и охотников."
+    },
+    en: {
+        title1: "Snake",
+        title2: "And",
+        title3: "Compass",
+        startBtn: "▶ SURVIVAL MODE!",
+        supportTitle: "🤝 SUPPORT THE PROJECT 💙",
+        supportText1: "The app is free.",
+        supportText2: "Transfer:",
+        copyBtn: "📋 Copy",
+        copiedBtn: "✅ Copied!",
+        thanks: "❤️ Thank you!",
+        catalog: "👉 Anti-AI Shield Catalog",
+        playAgain: "🔄 Play Again",
+        playAgain2: "🔄 Again",
+        menu: "🏠 Menu",
+        goToLeaderboard: "🏆 To Hall of Fame →",
+        gravLabel: "⬇ Gravity:",
+        hpLabel: "❤️ Integrity:",
+        resultWinLabel: "🎉 3 MINUTES SURVIVED!",
+        resultTangleLabel: "❌ TANGLED!",
+        resultTimeLabel: "⏱ Time's Up!",
+        resultFallLabel: "💥 CRASHED!",
+        resultLavaLabel: "🔥 BURNED IN LAVA!",
+        resultIdleLabel: "😴 SNAKE FELL ASLEEP!",
+        resultHunterLabel: "👾 CAUGHT BY HUNTER!",
+        resultArenaLabel: "⛔ LEFT ARENA!",
+        resultWinText: "You survived the chaos! Remaining health: {hp}%.",
+        rewardText: "🎁 Reward: Red Snake!",
+        resultTangleText: "The snake got tangled! Survived: {score} sec.",
+        resultTimeText: "System Bug? Progress: {score} sec.",
+        resultFallText: "Fall was fatal! Survived: {score} sec.",
+        resultLavaText: "Lava consumed you! Survived: {score} sec.",
+        resultIdleText: "You can't stand still! Snake slept for {score} sec.",
+        resultHunterText: "The hunter caught you! Survived: {score} sec.",
+        resultArenaText: "Arena collapsed! Survived: {score} sec.",
+        ttsTangle: "Oops! The snake got tangled!",
+        ttsWin: "Incredible! You lasted 3 minutes! Reward: Red Snake!",
+        ttsTime: function() { return "Time is up."; },
+        ttsFall: function() { return "Crashed on landing."; },
+        ttsLava: function() { return "Hiss! Burned in lava."; },
+        ttsIdle: "The snake fell asleep! Keep moving!",
+        ttsHunter: "The hunter caught you!",
+        ttsArena: "Left safe zone!",
+        ttsStart: "Survival Mode On! Last 3 minutes. Move, switch gravity, avoid lava and hunters."
+    }
+};
+
+window.toggleLanguage = function() {
+    currentLang = currentLang === 'ru' ? 'en' : 'ru';
+    document.getElementById('langToggleBtn').textContent = currentLang === 'ru' ? 'RU / EN' : 'EN / RU';
+    updateLanguage();
+};
+
+function updateLanguage() {
+    const t = translations[currentLang];
+
+    document.getElementById('txt-title1').textContent = t.title1;
+    document.getElementById('txt-title2').textContent = t.title2;
+    document.getElementById('txt-title3').textContent = t.title3;
+    document.getElementById('txt-startBtn').textContent = t.startBtn;
+    document.getElementById('txt-supportTitle').textContent = t.supportTitle;
+    document.getElementById('txt-supportText1').textContent = t.supportText1;
+    document.getElementById('txt-supportText2').innerHTML = `${t.supportText2} <strong class="phone">8-920-227-56-76</strong>`;
+    document.getElementById('txt-copyBtn').textContent = t.copyBtn;
+    document.getElementById('txt-thanks').textContent = t.thanks;
+    document.getElementById('txt-catalog').textContent = t.catalog;
+    document.getElementById('txt-playAgain').textContent = t.playAgain;
+    document.getElementById('txt-playAgain2').textContent = t.playAgain2;
+    document.getElementById('txt-menu').textContent = t.menu;
+    document.getElementById('txt-menu2').textContent = t.menu;
+    document.getElementById('txt-goToBoard').textContent = t.goToLeaderboard;
+
+    const gl = document.getElementById('grav-label');
+    const hl = document.getElementById('hp-label');
+    if (gl) gl.textContent = t.gravLabel;
+    if (hl) hl.textContent = t.hpLabel;
+}
+
+function speakRaw(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(String(text));
+        u.lang = currentLang === 'ru' ? 'ru-RU' : 'en-US';
+        u.rate = 1.05; u.pitch = 1.0;
+        window.speechSynthesis.speak(u);
+    }
+}
+function speakText(key) {
+    const t = translations[currentLang][key];
+    let text = typeof t === 'function' ? t() : t;
+    if (!text) text = key;
+    speakRaw(text);
+}
+
+window.copyPhone = function() {
+    const phone = "8-920-227-56-76";
+    const t = translations[currentLang];
+    navigator.clipboard.writeText(phone).then(() => {
+        const btn = document.getElementById('txt-copyBtn');
+        if (btn) { btn.textContent = t.copiedBtn; setTimeout(() => { btn.textContent = t.copyBtn; }, 2000); }
+    }).catch(() => {});
+};
+
+function createSignedToken(game, snakes) {
+    const nonce = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const timestamp = Date.now();
+    const data = { g: game, s: snakes, t: timestamp, n: nonce };
+    const sig = btoa(unescape(encodeURIComponent(data.g + '|' + data.s + '|' + data.t + '|' + data.n + '|AntonKuznetsovSnakeProject2026')));
+    data.sig = sig;
+    return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+}
+window.goToLeaderboard = function() {
+    const token = createSignedToken(GAME_NAME_FOR_BOARD, REWARD_SNAKES_ON_WIN);
+    const url = new URL(MAIN_LEADERBOARD_URL);
+    url.searchParams.set('reward', token);
+    const targetUrl = url.toString();
+    const newWindow = window.open(targetUrl, '_blank');
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') window.location.href = targetUrl;
+};
+
+function startConfetti() {
+    const colors = ['#00ffff', '#ffffff', '#0088ff', '#aa00ff'];
+    for (let i = 0; i < 120; i++) {
+        const conf = document.createElement('div');
+        conf.className = 'confetti';
+        conf.style.left = Math.random() * 100 + 'vw';
+        conf.style.width = (Math.random() * 10 + 5) + 'px';
+        conf.style.height = (Math.random() * 10 + 5) + 'px';
+        conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        conf.style.transition = `top ${Math.random() * 2 + 2}s linear, transform ${Math.random() * 2 + 2}s linear, opacity 2s`;
+        document.body.appendChild(conf);
+        setTimeout(() => { conf.style.top = '110vh'; conf.style.transform = `rotate(${Math.random() * 720}deg) translateX(${(Math.random() - 0.5) * 200}px)`; conf.style.opacity = '0'; }, 50);
+        setTimeout(() => conf.remove(), 4500);
+    }
+}
+
+let audioCtx = null;
+function initAudio() { if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} } if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }
+function playTone(f, d, type='sine', vol=0.3) {
+    if (!audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + d);
+    } catch(e) {}
+}
+function playGravSwitchSound() {
+    initAudio(); if (!audioCtx) return;
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+}
+function playImpactSound(intensity) { initAudio(); if (!audioCtx) return; playTone(50 + intensity * 20, 0.15, 'square', Math.min(0.4, 0.15 * intensity)); }
+function playLavaSound() { initAudio(); if (!audioCtx) return; playTone(120, 0.4, 'sawtooth', 0.3); setTimeout(() => playTone(80, 0.5, 'sawtooth', 0.25), 150); }
+function playTangleSound() {
+    initAudio(); if (!audioCtx) return;
+    playTone(220, 0.25, 'sawtooth', 0.25);
+    setTimeout(() => playTone(160, 0.3, 'sawtooth', 0.2), 150);
+    setTimeout(() => playTone(110, 0.4, 'sawtooth', 0.15), 300);
+}
+function playWinSound() { initAudio(); if (!audioCtx) return; [523,659,784,1046].forEach((f,i)=>setTimeout(()=>playTone(f,0.15,'sine',0.3),i*100)); }
+function playHunterSpawnSound() {
+    initAudio(); if (!audioCtx) return;
+    playTone(180, 0.3, 'triangle', 0.25);
+    setTimeout(() => playTone(140, 0.3, 'triangle', 0.2), 100);
+}
+function playHunterHitSound() {
+    initAudio(); if (!audioCtx) return;
+    playTone(80, 0.4, 'square', 0.4);
+    setTimeout(() => playTone(50, 0.5, 'square', 0.3), 100);
+}
+
+document.addEventListener('click', initAudio, { once: true });
+document.addEventListener('keydown', initAudio, { once: true });
+
+// ==================== GAME STATE ====================
+let isGameActive = false;
+let timerInterval = null;
+let gameTimeLeft = 180;
+const MAX_TIME = 180;
+let stunTime = 0;
+let gameOver = false;
+let progressPercent = 0;
+let health = 100;
+let gameStartTime = 0;
+let difficultyLevel = 0;
+
+// ==== v3: СТАМИНА (античит бездействия) ====
+let stamina = 100;
+const STAMINA_DRAIN_RATE = 25;              // Потеря в секунду при простое
+const STAMINA_REGEN_RATE = 18;              // Восстановление в секунду при движении
+
+// Оконный контроль реальной активности (закрывает дырку с «дрожанием на месте»)
+const ACTIVITY_WINDOW = 4;                  // Окно проверки, сек
+const MIN_AVG_SPEED = 0.6;                  // Минимум единиц/сек для «движения»
+let activityDistanceBuffer = 0;
+let activityTimer = 0;
+
+// ==== v3: СУЖАЮЩАЯСЯ АРЕНА ====
+let arenaRadius = 12;
+const ARENA_MIN = 3.5;
+const ARENA_SHRINK_RATE = 0.08;
+const ARENA_DAMAGE_RATE = 12;               // HP/сек за ареной
+
+// ==== v3: ОХОТНИКИ ====
+let lastHunterSpawn = 0;
+const HUNTER_SPAWN_INTERVAL = 12;
+const MAX_HUNTERS = 5;
+const HUNTER_SPAWN_DIST = 16;
+const HUNTER_HIT_RADIUS = 1.3;
+const HUNTER_DAMAGE = 30;
+const HUNTER_LIFETIME_MS = 15000;
+const hunters = [];
+
+// ==== v3: ФОРС-СМЕНА ГРАВИТАЦИИ ====
+let lastForcedGravChange = 0;
+let nextForcedGravChange = 15;
+
+const ROOM_HALF = 12;
+const WALL_H = 10.0;
+const WALL_T = 0.45;
+
+// ==== ГРАВИТАЦИЯ ====
+let gravityDir = 0;
+const GRAV_DIRS_RU = ["НИЗ", "НАПРАВО", "ВЕРХ", "НАЛЕВО"];
+const GRAV_DIRS_EN = ["DOWN", "RIGHT", "UP", "LEFT"];
+
+const GRAVITY_FORCE = 15.0;
+const SAFE_FALL_SPEED = 8.0;
+const HP_LOSS_FACTOR = 5.0;
+
+const _desiredCamPos = new THREE.Vector3();
+const _aimTarget = new THREE.Vector3();
+const _hunterDir = new THREE.Vector3();
+
+const CAM_OFFSET_DOWN  = new THREE.Vector3( 0,  6.0,  4.0);
+const CAM_OFFSET_RIGHT = new THREE.Vector3(-6.0, 0.0,  4.0);
+const CAM_OFFSET_LEFT  = new THREE.Vector3( 6.0, 0.0,  4.0);
+const CAM_OFFSET_UP    = new THREE.Vector3( 0, -6.0,  4.0);
+
+const sceneColor = 0x050510;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(sceneColor);
+scene.fog = new THREE.Fog(sceneColor, 15, 60);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 300);
+camera.position.set(0, 6.0, 7.0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.95;
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.domElement.style.position = 'fixed';
+renderer.domElement.style.top = '0';
+renderer.domElement.style.left = '0';
+renderer.domElement.style.zIndex = '1';
+renderer.domElement.style.touchAction = 'none';
+renderer.domElement.style.pointerEvents = 'auto';
+document.body.appendChild(renderer.domElement);
+renderer.domElement.style.display = 'none';
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enabled = true;
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI / 2.05;
+controls.minPolarAngle = 0.1;
+controls.enableZoom = true;
+controls.enableRotate = true;
+controls.enablePan = false;
+controls.minDistance = 2.0;
+controls.maxDistance = 14;
+controls.zoomSpeed = 1.5;
+controls.rotateSpeed = 0.8;
+
+const hemiLight = new THREE.HemisphereLight(0x2a3350, 0x140f0a, 0.55);
+scene.add(hemiLight);
+const ambient = new THREE.AmbientLight(0x40405a, 0.28);
+scene.add(ambient);
+const mainLight = new THREE.DirectionalLight(0xb9c6e0, 1.1);
+mainLight.position.set(25,60,20);
+mainLight.castShadow = true;
+mainLight.shadow.mapSize.width = 2048;
+mainLight.shadow.mapSize.height = 2048;
+mainLight.shadow.camera.near = 0.5;
+mainLight.shadow.camera.far = 180;
+mainLight.shadow.camera.left = -90; mainLight.shadow.camera.right = 90;
+mainLight.shadow.camera.top = 90; mainLight.shadow.camera.bottom = -90;
+mainLight.shadow.bias = -0.001;
+scene.add(mainLight);
+
+const floorMat = new THREE.MeshPhysicalMaterial({ color: 0x0a0c18, roughness: 0.98, metalness: 0.05 });
+const floor = new THREE.Mesh(new THREE.CircleGeometry(30, 64), floorMat);
+floor.rotation.x = -Math.PI/2;
+floor.position.y = -1.75;
+floor.receiveShadow = true;
+scene.add(floor);
+
+const snakeGroup = new THREE.Group();
+scene.add(snakeGroup);
+
+const MAX_SEGMENTS = 70;
+let activeSegments = 14;
+const BASE_SEGMENT_RADIUS = 0.48;
+const SEGMENT_SPACING = 0.55;
+const snakeBody = [];
+const FIXED_SCALE = 1.0;
+
+const bodyMatGlass = new THREE.MeshPhysicalMaterial({
+    color: 0xc82020, roughness: 0.15, metalness: 0.8, transparent: false,
+    opacity: 1.0, emissive: 0x880000, emissiveIntensity: 0.35,
+    clearcoat: 1.0, clearcoatRoughness: 0.1, envMapIntensity: 1.2,
+});
+const baseRadii = [];
+for (let i = 0; i < MAX_SEGMENTS; i++) {
+    const t = i / (MAX_SEGMENTS - 1);
+    baseRadii.push(BASE_SEGMENT_RADIUS * (1 - t * 0.7));
+}
+for (let i = 0; i < MAX_SEGMENTS; i++) {
+    const geo = new THREE.SphereGeometry(baseRadii[i], 24, 24);
+    const mesh = new THREE.Mesh(geo, bodyMatGlass.clone());
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    mesh.userData.baseRadius = baseRadii[i];
+    snakeGroup.add(mesh); snakeBody.push(mesh);
+    mesh.scale.set(FIXED_SCALE, FIXED_SCALE, FIXED_SCALE);
+    mesh.visible = i < activeSegments;
+}
+
+const headGeo = new THREE.SphereGeometry(0.88, 36, 36);
+const head = new THREE.Mesh(headGeo, bodyMatGlass.clone());
+head.castShadow = true;
+snakeGroup.add(head);
+head.scale.set(FIXED_SCALE, FIXED_SCALE * 0.85, FIXED_SCALE * 1.45);
+
+const headLight = new THREE.PointLight(0xff6644, 1.6, 18);
+headLight.position.set(0, 1.2, 2.2);
+head.add(headLight);
+
+function createEye(ox, oy, oz) {
+    const g = new THREE.Group();
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.24, 28, 28), new THREE.MeshPhysicalMaterial({ color: 0xf8f8ff, roughness: 0.1, metalness: 0.2 }));
+    white.scale.set(1, 1.1, 0.9); g.add(white);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.15, 24, 24), new THREE.MeshPhysicalMaterial({ color: 0xffcc00, emissive: 0xffaa00, emissiveIntensity: 1.5 }));
+    iris.position.z = 0.17; iris.scale.set(1, 1.2, 0.5); g.add(iris);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.075, 18, 18), new THREE.MeshPhysicalMaterial({ color: 0x111111 }));
+    pupil.scale.set(0.5, 1.6, 0.4); pupil.position.z = 0.24; g.add(pupil);
+    g.position.set(ox, oy, oz);
+    return g;
+}
+head.add(createEye(-0.42, 0.35, 0.78));
+head.add(createEye(0.42, 0.35, 0.78));
+
+const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.045, 14, 24, Math.PI), new THREE.MeshPhysicalMaterial({ color: 0x5a0808, emissive: 0x330000, emissiveIntensity: 0.6 }));
+mouth.position.set(0, -0.28, 0.98); mouth.rotation.z = Math.PI;
+head.add(mouth);
+
+const tongueGroup = new THREE.Group();
+const tongueBase = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.4, 8), new THREE.MeshPhysicalMaterial({ color: 0xff2244, emissive: 0x880011, emissiveIntensity: 0.8 }));
+tongueBase.rotation.x = Math.PI / 2;
+tongueBase.position.z = 0.2;
+tongueGroup.add(tongueBase);
+tongueGroup.position.set(0, -0.28, 1.08);
+head.add(tongueGroup);
+
+const HEAD_RADIUS = 0.88;
+const HEAD_SCALE_Z = 1.45;
+const BACK_OFFSET = HEAD_RADIUS * HEAD_SCALE_Z + 0.05;
+
+const segmentPositions = [];
+for (let i = 0; i < MAX_SEGMENTS; i++) segmentPositions.push(new THREE.Vector3(-i * SEGMENT_SPACING, 0, 0));
+
+const headPos = new THREE.Vector3(0, 0, 0);
+let dirAngle = Math.PI / 2;
+let targetAngle = Math.PI / 2;
+const moveDir = new THREE.Vector3(1, 0, 0);
+const BASE_SPEED = 4.5;
+const MAX_PATH = 900;
+const pathHistory = [];
+for (let i = 0; i < MAX_PATH; i++) pathHistory.push(new THREE.Vector3(0, 0, 0));
+let pathWrite = 0;
+let pathValid = 0;
+let speedMult = 1.0;
+let eatAnim = 0;
+
+let fallVelocity = 0;
+
+const houseGroup = new THREE.Group();
+scene.add(houseGroup);
+
+// ==== УРОВЕНЬ ====
+const wallMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9, metalness: 0.05 });
+function addWall(w, h, d, x, y, z, color) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), color ? new THREE.MeshStandardMaterial({ color: color, roughness: 0.9, metalness: 0.05 }) : wallMat);
+    m.position.set(x, y, z);
+    m.castShadow = true; m.receiveShadow = true;
+    houseGroup.add(m);
+}
+
+const innerY = -1.6 + WALL_H / 2;
+addWall(ROOM_HALF * 2 + WALL_T * 2, WALL_H, WALL_T, 0, innerY, -ROOM_HALF - WALL_T / 2);
+addWall(ROOM_HALF * 2 + WALL_T * 2, WALL_H, WALL_T, 0, innerY,  ROOM_HALF + WALL_T / 2);
+addWall(WALL_T, WALL_H, ROOM_HALF * 2, -ROOM_HALF - WALL_T / 2, innerY, 0);
+addWall(WALL_T, WALL_H, ROOM_HALF * 2,  ROOM_HALF + WALL_T / 2, innerY, 0);
+
+const CEIL_Y = -1.6 + WALL_H;
+
+// ==== ПЛАТФОРМЫ ====
+const platforms = [];
+function createPlatform(x, y, z, w, h, d, color) {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d),
+        new THREE.MeshStandardMaterial({ color: color || 0x445566, roughness: 0.75, metalness: 0.15 }));
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    houseGroup.add(mesh);
+    platforms.push({
+        mesh, x, y, z, w, h, d,
+        topY: y + h / 2,
+        bottomY: y - h / 2
+    });
+}
+
+createPlatform(10, -1.4, 10, 6, 0.4, 6, 0x44aaff);
+
+// ==== ЛАВА-ЯМЫ ====
+const lavaPools = [];
+function createLavaPool(x, z, r) {
+    const lava = new THREE.Mesh(
+        new THREE.CircleGeometry(r, 32),
+        new THREE.MeshStandardMaterial({ color: 0xff4400, emissive: 0xff2200, emissiveIntensity: 1.4, roughness: 0.4 })
+    );
+    lava.rotation.x = -Math.PI / 2;
+    lava.position.set(x, -1.58, z);
+    houseGroup.add(lava);
+    lavaPools.push({ x, z, r, mesh: lava });
+}
+createLavaPool(-10, -10, 2.5);
+createLavaPool(10, -10, 2.0);
+createLavaPool(-10, 10, 2.0);
+
+// ==== СУЖАЮЩАЯСЯ АРЕНА (визуальное кольцо) ====
+const safeZoneRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.97, 1.0, 96),
+    new THREE.MeshBasicMaterial({
+        color: 0x00ffff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false
+    })
+);
+safeZoneRing.rotation.x = -Math.PI / 2;
+safeZoneRing.position.y = -1.73;
+safeZoneRing.scale.set(ROOM_HALF, ROOM_HALF, 1);
+scene.add(safeZoneRing);
+
+const safeZoneGlow = new THREE.PointLight(0x00ffff, 0.8, 30);
+safeZoneGlow.position.set(0, 2, 0);
+scene.add(safeZoneGlow);
+
+// ==== ОХОТНИКИ ====
+function spawnHunter() {
+    if (hunters.length >= MAX_HUNTERS) return;
+
+    // Спавн на краю арены (не за её пределами)
+    const spawnRadius = Math.min(HUNTER_SPAWN_DIST, arenaRadius - 0.5);
+    const angle = Math.random() * Math.PI * 2;
+    const hx = headPos.x + Math.cos(angle) * spawnRadius;
+    const hz = headPos.z + Math.sin(angle) * spawnRadius;
+    const hy = headPos.y + 0.5;
+
+    const group = new THREE.Group();
+
+    const core = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.75),
+        new THREE.MeshStandardMaterial({
+            color: 0xff00aa,
+            emissive: 0xff0066,
+            emissiveIntensity: 2.0,
+            roughness: 0.3,
+            metalness: 0.5
+        })
+    );
+    group.add(core);
+
+    const shell = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(1.0, 0),
+        new THREE.MeshBasicMaterial({
+            color: 0xff00ff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.7
+        })
+    );
+    group.add(shell);
+
+    const hLight = new THREE.PointLight(0xff00aa, 1.5, 10);
+    group.add(hLight);
+
+    group.position.set(hx, hy, hz);
+    scene.add(group);
+
+    hunters.push({
+        mesh: group,
+        core: core,
+        shell: shell,
+        speed: 3.2 + difficultyLevel * 0.4,
+        phase: Math.random() * Math.PI * 2,
+        spawnTime: performance.now()
+    });
+
+    playHunterSpawnSound();
+}
+
+function clearHunters() {
+    hunters.forEach(h => {
+        scene.remove(h.mesh);
+    });
+    hunters.length = 0;
+}
+
+function getGravityVector() {
+    switch(gravityDir) {
+        case 0: return new THREE.Vector3(0, -1, 0);
+        case 1: return new THREE.Vector3(1, 0, 0);
+        case 2: return new THREE.Vector3(0, 1, 0);
+        case 3: return new THREE.Vector3(-1, 0, 0);
+        default: return new THREE.Vector3(0, -1, 0);
+    }
+}
+
+function checkSelfCollision(headPosition) {
+    if (performance.now() - gameStartTime < 2000) return false;
+    const headRadius = 0.55;
+    for (let i = 10; i < activeSegments; i++) {
+        const dx = headPosition.x - segmentPositions[i].x;
+        const dz = headPosition.z - segmentPositions[i].z;
+        const dy = headPosition.y - segmentPositions[i].y;
+        const dist = dx * dx + dz * dz + dy * dy;
+        const need = headRadius + baseRadii[i] * 0.9;
+        if (dist < need * need) return true;
+    }
+    return false;
+}
+
+function checkLavaCollision(pos) {
+    for (let lp of lavaPools) {
+        const dx = pos.x - lp.x;
+        const dz = pos.z - lp.z;
+        if (dx * dx + dz * dz < lp.r * lp.r) return true;
+    }
+    return false;
+}
+
+function findGroundHeight(pos, gVec) {
+    const isDown = gVec.y < 0;
+    const isUp = gVec.y > 0;
+    const isRight = gVec.x > 0;
+    const isLeft = gVec.x < 0;
+
+    if (isDown) {
+        let groundY = -1.75;
+        for (let p of platforms) {
+            if (pos.x >= p.x - p.w/2 && pos.x <= p.x + p.w/2 &&
+                pos.z >= p.z - p.d/2 && pos.z <= p.z + p.d/2) {
+                if (p.topY > groundY && p.topY <= pos.y + 0.5) {
+                    groundY = p.topY;
+                }
+            }
+        }
+        return groundY + 0.85;
+    } else if (isUp) {
+        let ceilY = CEIL_Y;
+        for (let p of platforms) {
+             if (pos.x >= p.x - p.w/2 && pos.x <= p.x + p.w/2 &&
+                pos.z >= p.z - p.d/2 && pos.z <= p.z + p.d/2) {
+                if (p.bottomY < ceilY && p.bottomY >= pos.y - 0.5) {
+                    ceilY = p.bottomY;
+                }
+            }
+        }
+        return ceilY - 0.85;
+    } else {
+        if (isRight) return arenaRadius - 0.7;
+        if (isLeft) return -(arenaRadius - 0.7);
+    }
+    return -1.75 + 0.85;
+}
+
+function spawnChaos() {
+    difficultyLevel++;
+
+    // Спавн лавы — только внутри арены
+    for (let attempt = 0; attempt < 5; attempt++) {
+        const lx = (Math.random() - 0.5) * 2 * (arenaRadius - 2);
+        const lz = (Math.random() - 0.5) * 2 * (arenaRadius - 2);
+        const dist = Math.hypot(lx - headPos.x, lz - headPos.z);
+        if (dist > 5) {
+            createLavaPool(lx, lz, 1.5 + Math.random());
+            break;
+        }
+    }
+
+    // Спавн платформы — внутри арены
+    const px = (Math.random() - 0.5) * 2 * (arenaRadius - 2);
+    const pz = (Math.random() - 0.5) * 2 * (arenaRadius - 2);
+    const py = -1 + Math.random() * 4;
+    createPlatform(px, py, pz, 2 + Math.random()*2, 0.4, 2 + Math.random()*2, 0x555555);
+}
+
+function updateHud() {
+    const gravEl = document.getElementById('house-grav-dir');
+    const hpEl = document.getElementById('house-hp');
+    const hpBarEl = document.getElementById('hp-bar');
+    const stamEl = document.getElementById('house-stamina');
+    const stamBarEl = document.getElementById('stamina-bar');
+
+    if (gravEl) {
+        const dirs = currentLang === 'ru' ? GRAV_DIRS_RU : GRAV_DIRS_EN;
+        gravEl.textContent = dirs[gravityDir];
+    }
+    if (hpEl) hpEl.textContent = Math.max(0, Math.floor(health)) + '%';
+    if (hpBarEl) hpBarEl.style.width = Math.max(0, health) + '%';
+    if (stamEl) stamEl.textContent = Math.max(0, Math.floor(stamina)) + '%';
+    if (stamBarEl) stamBarEl.style.width = Math.max(0, stamina) + '%';
+}
+
+// ==== v3: Единая функция смены гравитации + сброс камеры ====
+function switchGravity(change) {
+    gravityDir = (gravityDir + change + 4) % 4;
+    playGravSwitchSound();
+    updateHud();
+    fallVelocity = 0;
+
+    // Сброс полярных ограничений камеры под новую ось
+    if (gravityDir === 2) { // UP
+        // Даём камере встать снизу
+        controls.maxPolarAngle = Math.PI * 0.98;
+        controls.minPolarAngle = -Math.PI / 4;
+    } else {
+        // Обычные ограничения для DOWN/LEFT/RIGHT
+        controls.maxPolarAngle = Math.PI / 2.05;
+        controls.minPolarAngle = 0.1;
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (!isGameActive || gameOver) return;
+
+    if (e.code === 'ArrowUp') {
+        e.preventDefault();
+        switchGravity(1);
+        return;
+    }
+    if (e.code === 'ArrowDown') {
+        e.preventDefault();
+        switchGravity(-1);
+        return;
+    }
+    if (e.repeat) return;
+
+    let newAngle = null;
+    if (e.key === 'ArrowLeft') newAngle = dirAngle + Math.PI / 2;
+    else if (e.key === 'ArrowRight') newAngle = dirAngle - Math.PI / 2;
+
+    if (newAngle !== null) {
+        targetAngle = Math.atan2(Math.sin(newAngle), Math.cos(newAngle));
+        e.preventDefault();
+    }
+});
+
+function setupTouchControls() {
+    const btns = document.querySelectorAll('.touch-btn');
+    const actions = {
+        left: () => { targetAngle = dirAngle + Math.PI / 2; },
+        right: () => { targetAngle = dirAngle - Math.PI / 2; },
+        gravUp: () => { if (isGameActive && !gameOver) switchGravity(1); },
+        gravDown: () => { if (isGameActive && !gameOver) switchGravity(-1); },
+        forward: () => { if (isGameActive && !gameOver) speedMult = Math.min(2.0, speedMult + 0.5); },
+        backward: () => { if (isGameActive && !gameOver) speedMult = Math.max(0.0, speedMult - 0.5); }
+    };
+    btns.forEach(btn => {
+        const action = btn.dataset.action;
+        if (!action) return;
+        const start = (e) => {
+            e.preventDefault();
+            if (!isGameActive || gameOver) return;
+            if (actions[action]) actions[action]();
+        };
+        btn.addEventListener('touchstart', start, { passive: false });
+        btn.addEventListener('mousedown', start);
+        btn.addEventListener('touchend', e => e.preventDefault(), { passive: false });
+        btn.addEventListener('mouseup', e => e.preventDefault());
+        btn.addEventListener('mouseleave', e => e.preventDefault());
+    });
+}
+setTimeout(setupTouchControls, 100);
+
+function updateTimerDisplay() {
+    const m = Math.floor(gameTimeLeft / 60);
+    const s = Math.floor(gameTimeLeft % 60);
+    const d = document.getElementById('timerDisplay');
+    if (!d) return;
+    d.textContent = `⏱ ${m}:${s.toString().padStart(2, '0')}`;
+    d.classList.toggle('warning', gameTimeLeft <= 10);
+}
+
+function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+
+    gameTimeLeft = MAX_TIME;
+    updateTimerDisplay();
+
+    timerInterval = setInterval(() => {
+        if (!isGameActive || gameOver) return;
+
+        gameTimeLeft--;
+        updateTimerDisplay();
+
+        if (gameTimeLeft % 20 === 0 && gameTimeLeft > 0) {
+            spawnChaos();
+        }
+
+        if (gameTimeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            finishGame('win');
+        }
+    }, 1000);
+}
+
+const clock = new THREE.Clock();
+let lastFrame = 0;
+const FRAME_INTERVAL = 1000 / 60;
+const cameraTarget = new THREE.Vector3(0, 0, 0);
+
+function animate(time) {
+    requestAnimationFrame(animate);
+    if (time - lastFrame < FRAME_INTERVAL) return;
+    lastFrame = time;
+    const delta = Math.min(clock.getDelta(), 0.05);
+    const elapsed = clock.elapsedTime;
+
+    if (!isGameActive || gameOver) {
+        controls.update();
+        renderer.render(scene, camera);
+        return;
+    }
+
+    const gVec = getGravityVector();
+    const prevHeadX = headPos.x;
+    const prevHeadY = headPos.y;
+    const prevHeadZ = headPos.z;
+
+    // 1. Steering
+    let angleDiff = targetAngle - dirAngle;
+    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+    const maxTurn = delta * 12;
+    if (Math.abs(angleDiff) > maxTurn) angleDiff = Math.sign(angleDiff) * maxTurn;
+    dirAngle += angleDiff;
+
+    moveDir.x = Math.cos(dirAngle);
+    moveDir.z = Math.sin(dirAngle);
+
+    // 2. Horizontal Movement
+    let currentSpeed = BASE_SPEED * speedMult;
+    if (stunTime > 0) { stunTime -= delta; currentSpeed = 0; }
+
+    let newX = headPos.x + moveDir.x * currentSpeed * delta;
+    let newZ = headPos.z + moveDir.z * currentSpeed * delta;
+
+    const limit = arenaRadius - 0.7;
+    if (Math.abs(newX) > limit) newX = Math.sign(newX) * limit;
+    if (Math.abs(newZ) > limit) newZ = Math.sign(newZ) * limit;
+
+    headPos.x = newX;
+    headPos.z = newZ;
+
+    // 3. Vertical Movement (гравитация)
+    if (gVec.y !== 0) {
+        fallVelocity += GRAVITY_FORCE * delta * gVec.y;
+        headPos.y += fallVelocity * delta;
+    } else if (gVec.x !== 0) {
+        fallVelocity += GRAVITY_FORCE * delta * gVec.x;
+        headPos.x += fallVelocity * delta;
+    }
+
+    // 4. Collision
+    let landed = false;
+    let impactSpeed = 0;
+
+    if (gVec.y < 0) {
+        const groundY = findGroundHeight(headPos, gVec);
+        if (headPos.y <= groundY) {
+            headPos.y = groundY;
+            impactSpeed = Math.abs(fallVelocity);
+            fallVelocity = 0;
+            landed = true;
+        }
+    } else if (gVec.y > 0) {
+        const ceilY = findGroundHeight(headPos, gVec);
+        if (headPos.y >= ceilY) {
+            headPos.y = ceilY;
+            impactSpeed = Math.abs(fallVelocity);
+            fallVelocity = 0;
+            landed = true;
+        }
+    } else {
+        const wallLimit = gVec.x > 0 ? (arenaRadius - 0.7) : -(arenaRadius - 0.7);
+        if ((gVec.x > 0 && headPos.x >= wallLimit) || (gVec.x < 0 && headPos.x <= wallLimit)) {
+            headPos.x = wallLimit;
+            impactSpeed = Math.abs(fallVelocity);
+            fallVelocity = 0;
+            landed = true;
+        }
+    }
+
+    // 5. Fall Damage
+    if (landed && impactSpeed > SAFE_FALL_SPEED) {
+        const damage = (impactSpeed - SAFE_FALL_SPEED) * HP_LOSS_FACTOR;
+        health -= damage;
+        playImpactSound(impactSpeed);
+        activeSegments = Math.max(6, activeSegments - 2);
+        stunTime = 0.3;
+
+        if (health <= 0) {
+            finishGame('fall');
+            return;
+        }
+        updateHud();
+    }
+
+    // 6. Lava Check
+    if (checkLavaCollision(headPos)) {
+        playLavaSound();
+        speakText('ttsLava');
+        finishGame('lava');
+        return;
+    }
+
+    // 7. Self Collision
+    if (checkSelfCollision(headPos)) {
+        playTangleSound();
+        speakText('ttsTangle');
+        finishGame('tangle');
+        return;
+    }
+
+    // ==================== v3: АНТИЧИТ + АРЕНА + ОХОТНИКИ ====================
+
+    // A. Стамина через оконную проверку средней скорости
+    const movedDist = Math.sqrt(
+        (headPos.x - prevHeadX) ** 2 +
+        (headPos.y - prevHeadY) ** 2 +
+        (headPos.z - prevHeadZ) ** 2
+    );
+
+    activityDistanceBuffer += movedDist;
+    activityTimer += delta;
+
+    if (activityTimer >= ACTIVITY_WINDOW) {
+        const avgSpeed = activityDistanceBuffer / ACTIVITY_WINDOW;
+
+        if (avgSpeed >= MIN_AVG_SPEED) {
+            // Игрок реально двигался — восстановление
+            stamina = Math.min(100, stamina + STAMINA_REGEN_RATE * ACTIVITY_WINDOW);
+        } else {
+            // Игрок фактически стоял — жёсткий штраф
+            stamina -= STAMINA_DRAIN_RATE * ACTIVITY_WINDOW;
+        }
+
+        activityDistanceBuffer = 0;
+        activityTimer = 0;
+
+        if (stamina <= 0) {
+            speakText('ttsIdle');
+            finishGame('idle');
+            return;
+        }
+    }
+
+    // B. Сужающаяся арена — урон только когда прижим не по гравитации
+    if (arenaRadius > ARENA_MIN) {
+        arenaRadius = Math.max(ARENA_MIN, arenaRadius - ARENA_SHRINK_RATE * delta);
+
+        safeZoneRing.scale.set(arenaRadius, arenaRadius, 1);
+
+        const shrinkT = (ROOM_HALF - arenaRadius) / (ROOM_HALF - ARENA_MIN);
+        safeZoneRing.material.opacity = 0.4 + shrinkT * 0.5;
+        if (shrinkT > 0.8) safeZoneRing.material.color.setHex(0xff2200);
+        else safeZoneRing.material.color.setHex(0x00ffff);
+
+        const distFromCenter = Math.max(Math.abs(headPos.x), Math.abs(headPos.z));
+        if (distFromCenter > arenaRadius) {
+            // НЕ штрафуем, если игрока прижимает гравитацией к краю
+            const gPushX = gVec.x;
+            const gPushY = gVec.y;
+            const isPressedByGravity =
+                (gPushX > 0 && headPos.x > 0) ||
+                (gPushX < 0 && headPos.x < 0) ||
+                (gPushY < 0 && headPos.y < -1.6); // прижат ко дну
+
+            if (!isPressedByGravity) {
+                health -= ARENA_DAMAGE_RATE * delta;
+                if (health <= 0) {
+                    speakText('ttsArena');
+                    finishGame('arena');
+                    return;
+                }
+                updateHud();
+            }
+        }
+    }
+
+    // C. Охотники
+    if (elapsed - lastHunterSpawn >= HUNTER_SPAWN_INTERVAL && gameTimeLeft > 10) {
+        spawnHunter();
+        lastHunterSpawn = elapsed;
+    }
+
+    for (let i = hunters.length - 1; i >= 0; i--) {
+        const h = hunters[i];
+
+        // Удаляем старых охотников
+        if (performance.now() - h.spawnTime > HUNTER_LIFETIME_MS) {
+            scene.remove(h.mesh);
+            hunters.splice(i, 1);
+            continue;
+        }
+
+        _hunterDir.subVectors(headPos, h.mesh.position);
+        const dist = _hunterDir.length();
+        if (dist > 0.1) _hunterDir.normalize();
+
+        h.mesh.position.addScaledVector(_hunterDir, h.speed * delta);
+
+        h.core.rotation.x += delta * 3;
+        h.core.rotation.y += delta * 2;
+        h.shell.rotation.x -= delta * 1.5;
+        h.shell.rotation.z += delta * 2.5;
+
+        if (dist < HUNTER_HIT_RADIUS) {
+            playHunterHitSound();
+            health -= HUNTER_DAMAGE;
+            activeSegments = Math.max(6, activeSegments - 3);
+            stunTime = 0.4;
+
+            scene.remove(h.mesh);
+            hunters.splice(i, 1);
+
+            if (health <= 0) {
+                speakText('ttsHunter');
+                finishGame('hunter');
+                return;
+            }
+            updateHud();
+        }
+    }
+
+    // D. Форс-смена гравитации
+    if (elapsed - lastForcedGravChange >= nextForcedGravChange && gameTimeLeft > 20) {
+        lastForcedGravChange = elapsed;
+        nextForcedGravChange = Math.max(8, 15 - difficultyLevel * 0.5);
+
+        const randomChange = Math.random() > 0.5 ? 1 : -1;
+        switchGravity(randomChange);
+        speakRaw(currentLang === 'ru' ? "Гравитация нестабильна!" : "Gravity unstable!");
+    }
+
+    // ==================== КОНЕЦ v3 МЕХАНИК ====================
+
+    // 8. Score
+    const timeSurvived = MAX_TIME - gameTimeLeft;
+    progressPercent = timeSurvived;
+
+    // 9. Path History & Rendering
+    segmentPositions[0].x = headPos.x - moveDir.x * BACK_OFFSET;
+    segmentPositions[0].z = headPos.z - moveDir.z * BACK_OFFSET;
+    segmentPositions[0].y = headPos.y;
+
+    segmentPositions[1].x = segmentPositions[0].x - moveDir.x * SEGMENT_SPACING;
+    segmentPositions[1].z = segmentPositions[0].z - moveDir.z * SEGMENT_SPACING;
+    segmentPositions[1].y = headPos.y;
+
+    const lastP = pathHistory[pathWrite];
+    if (pathValid === 0 || segmentPositions[0].distanceTo(lastP) > 0.02) {
+        pathWrite = (pathWrite + 1) % MAX_PATH;
+        pathHistory[pathWrite].copy(segmentPositions[0]);
+        if (pathValid < MAX_PATH) pathValid++;
+    }
+
+    const cumDist = [0];
+    let total = 0;
+    for (let j = 1; j < pathValid; j++) {
+        const idxC = (pathWrite - j + MAX_PATH) % MAX_PATH;
+        const idxP = (pathWrite - j + 1 + MAX_PATH) % MAX_PATH;
+        total += pathHistory[idxP].distanceTo(pathHistory[idxC]);
+        cumDist.push(total);
+    }
+    function getPoint(distFromStart) {
+        if (distFromStart <= 0) return pathHistory[pathWrite].clone();
+        if (distFromStart >= cumDist[cumDist.length - 1]) {
+            const lastIdx = (pathWrite - cumDist.length + 1 + MAX_PATH) % MAX_PATH;
+            return pathHistory[lastIdx].clone();
+        }
+        let idx = 0;
+        while (idx < cumDist.length && cumDist[idx] < distFromStart) idx++;
+        if (idx === 0) return pathHistory[pathWrite].clone();
+        const prevIdx = (pathWrite - idx + 1 + MAX_PATH) % MAX_PATH;
+        const currIdx = (pathWrite - idx + MAX_PATH) % MAX_PATH;
+        const prevDist = cumDist[idx - 1]; const currDist = cumDist[idx];
+        const t = (distFromStart - prevDist) / (currDist - prevDist);
+        return new THREE.Vector3().lerpVectors(pathHistory[prevIdx], pathHistory[currIdx], t);
+    }
+    for (let i = 2; i < MAX_SEGMENTS; i++) {
+        const d = (i - 1) * SEGMENT_SPACING;
+        segmentPositions[i].copy(getPoint(d));
+    }
+
+    const perpX = -moveDir.z; const perpZ = moveDir.x;
+    for (let i = 0; i < MAX_SEGMENTS; i++) {
+        const mesh = snakeBody[i];
+        mesh.visible = i < activeSegments;
+        if (!mesh.visible) continue;
+        const pos = segmentPositions[i];
+        const phase = i * 0.3 - elapsed * 2.2;
+        const latOff = Math.sin(phase) * 0.15;
+        let yOff = pos.y + Math.sin(phase * 0.6 + i * 0.08) * 0.15;
+        mesh.position.set(pos.x + perpX * latOff, yOff, pos.z + perpZ * latOff);
+    }
+
+    if (eatAnim > 0) eatAnim = Math.max(0, eatAnim - delta * 2.5);
+    mouth.scale.y = 0.3 + eatAnim * 2.5;
+    mouth.scale.x = 1.0 + eatAnim * 0.4;
+
+    head.position.set(headPos.x, headPos.y, headPos.z);
+    head.rotation.y = Math.PI / 2 - dirAngle;
+
+    if (gravityDir === 1) head.rotation.z = -0.2;
+    else if (gravityDir === 3) head.rotation.z = 0.2;
+    else if (gravityDir === 2) head.rotation.x = 0.2;
+    else head.rotation.x = 0;
+
+    const tongueOut = Math.max(0, Math.sin(elapsed * 5) * 0.7 + 0.3) * (eatAnim > 0.3 ? 0 : 1) * (stunTime > 0 ? 0.2 : 1);
+    tongueGroup.position.z = 1.08 + tongueOut * 0.45;
+    tongueGroup.visible = tongueOut > 0.1;
+
+    // Camera
+    let camOffset;
+    if (gravityDir === 1) camOffset = CAM_OFFSET_RIGHT;
+    else if (gravityDir === 3) camOffset = CAM_OFFSET_LEFT;
+    else if (gravityDir === 2) camOffset = CAM_OFFSET_UP;
+    else camOffset = CAM_OFFSET_DOWN;
+
+    _desiredCamPos.copy(headPos).add(camOffset);
+    camera.position.lerp(_desiredCamPos, 0.08);
+
+    _aimTarget.set(headPos.x, headPos.y, headPos.z);
+    cameraTarget.lerp(_aimTarget, 0.08);
+    controls.target.copy(cameraTarget);
+
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+window.showPage = function(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    const canvas = document.querySelector('canvas');
+    if (canvas) {
+        if (pageId === 'page-game') { canvas.style.display = 'block'; canvas.classList.add('game-active'); }
+        else { canvas.style.display = 'none'; canvas.classList.remove('game-active'); }
+    }
+};
+
+window.finishGame = function(reason) {
+    if (gameOver) return;
+    gameOver = true; isGameActive = false;
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+
+    clearHunters();
+
+    const label = document.getElementById('result-label');
+    const emoji = document.getElementById('result-emoji');
+    const winBlock = document.getElementById('win-block');
+    const loseBlock = document.getElementById('lose-block');
+    const t = translations[currentLang];
+
+    if (reason === 'win') {
+        label.textContent = t.resultWinLabel;
+        label.style.color = "#00ff00";
+        emoji.textContent = "🧭";
+        emoji.className = "result-score red-snake-reward";
+        document.getElementById('reward-text').textContent = t.rewardText;
+        document.getElementById('result-text-win').textContent = t.resultWinText.replace('{hp}', Math.floor(health));
+        winBlock.style.display = 'block';
+        loseBlock.style.display = 'none';
+        playWinSound();
+        startConfetti();
+    } else if (reason === 'tangle') {
+        label.textContent = t.resultTangleLabel; label.style.color = "#ff8866";
+        emoji.textContent = "💥"; emoji.className = "result-score";
+        document.getElementById('result-text-lose').textContent = t.resultTangleText.replace('{score}', Math.floor(progressPercent));
+        winBlock.style.display = 'none'; loseBlock.style.display = 'block';
+    } else if (reason === 'fall') {
+        label.textContent = t.resultFallLabel; label.style.color = "#ff5555";
+        emoji.textContent = "🪂"; emoji.className = "result-score";
+        document.getElementById('result-text-lose').textContent = t.resultFallText.replace('{score}', Math.floor(progressPercent));
+        winBlock.style.display = 'none'; loseBlock.style.display = 'block';
+    } else if (reason === 'lava') {
+        label.textContent = t.resultLavaLabel; label.style.color = "#ff4400";
+        emoji.textContent = "🔥"; emoji.className = "result-score";
+        document.getElementById('result-text-lose').textContent = t.resultLavaText.replace('{score}', Math.floor(progressPercent));
+        winBlock.style.display = 'none'; loseBlock.style.display = 'block';
+    } else if (reason === 'idle') {
+        label.textContent = t.resultIdleLabel; label.style.color = "#8888ff";
+        emoji.textContent = "😴"; emoji.className = "result-score";
+        document.getElementById('result-text-lose').textContent = t.resultIdleText.replace('{score}', Math.floor(progressPercent));
+        winBlock.style.display = 'none'; loseBlock.style.display = 'block';
+    } else if (reason === 'hunter') {
+        label.textContent = t.resultHunterLabel; label.style.color = "#ff00aa";
+        emoji.textContent = "👾"; emoji.className = "result-score";
+        document.getElementById('result-text-lose').textContent = t.resultHunterText.replace('{score}', Math.floor(progressPercent));
+        winBlock.style.display = 'none'; loseBlock.style.display = 'block';
+    } else if (reason === 'arena') {
+        label.textContent = t.resultArenaLabel; label.style.color = "#ff0000";
+        emoji.textContent = "⛔"; emoji.className = "result-score";
+        document.getElementById('result-text-lose').textContent = t.resultArenaText.replace('{score}', Math.floor(progressPercent));
+        winBlock.style.display = 'none'; loseBlock.style.display = 'block';
+    } else {
+        label.textContent = t.resultTimeLabel; label.style.color = "#ddbbbb";
+        emoji.textContent = "⏳"; emoji.className = "result-score";
+        document.getElementById('result-text-lose').textContent = t.resultTimeText.replace('{score}', Math.floor(progressPercent));
+        speakText('ttsTime');
+        winBlock.style.display = 'none'; loseBlock.style.display = 'block';
+    }
+    showPage('page-result');
+};
+
+window.startGame = function() {
+    initAudio();
+
+    health = 100;
+    stamina = 100;
+    gravityDir = 0;
+    progressPercent = 0;
+    gameTimeLeft = MAX_TIME;
+    difficultyLevel = 0;
+    arenaRadius = ROOM_HALF;
+    lastHunterSpawn = 0;
+    lastForcedGravChange = 0;
+    nextForcedGravChange = 15;
+    activityDistanceBuffer = 0;
+    activityTimer = 0;
+
+    updateTimerDisplay();
+    updateHud();
+
+    speedMult = 1.0;
+    stunTime = 0;
+    isGameActive = true;
+    gameOver = false;
+    activeSegments = 14;
+    eatAnim = 0;
+    fallVelocity = 0;
+    gameStartTime = performance.now();
+
+    clearHunters();
+
+    safeZoneRing.scale.set(ROOM_HALF, ROOM_HALF, 1);
+    safeZoneRing.material.color.setHex(0x00ffff);
+    safeZoneRing.material.opacity = 0.55;
+
+    headPos.set(10, -1.4 + 0.85, 10);
+
+    dirAngle = Math.PI + Math.PI / 4;
+    targetAngle = dirAngle;
+
+    const startDirX = Math.cos(dirAngle);
+    const startDirZ = Math.sin(dirAngle);
+
+    for (let i = 0; i < MAX_PATH; i++) {
+        pathHistory[i].set(headPos.x, headPos.y, headPos.z);
+    }
+    pathWrite = 0;
+    pathValid = 1;
+
+    for (let i = 0; i < MAX_SEGMENTS; i++) {
+        const d = i * SEGMENT_SPACING;
+        segmentPositions[i].set(
+            headPos.x - startDirX * d,
+            headPos.y,
+            headPos.z - startDirZ * d
+        );
+        snakeBody[i].visible = i < activeSegments;
+    }
+
+    controls.maxPolarAngle = Math.PI / 2.05;
+    controls.minPolarAngle = 0.1;
+
+    controls.target.set(headPos.x, headPos.y, headPos.z);
+    cameraTarget.set(headPos.x, headPos.y, headPos.z);
+    camera.position.copy(headPos).add(CAM_OFFSET_DOWN);
+
+    if (timerInterval) clearInterval(timerInterval);
+    startTimer();
+
+    showPage('page-game');
+    speakText('ttsStart');
+};
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+updateLanguage();
+document.getElementById('txt-startBtn').addEventListener('click', startGame);
+
+animate(0);
+console.log('✅ Игра "Змея и Дом: Гравитационный Компас (Survival v3)" запущена! Все механики v2 + фиксы.');
+</script>
+</body>
+</html>
